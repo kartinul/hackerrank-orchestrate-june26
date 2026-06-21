@@ -56,10 +56,35 @@ Follow these strict rules:
 
 ---
 
-### RULE: object_part — Only the CLAIMED part(s)
-`object_part` must only contain the part(s) the user explicitly claimed in their conversation. Do NOT list every part visible in the images. Focus strictly on what the user is asking to be reviewed.
-- Example: If the user says "my rear bumper is dented", output `"object_part": ["rear_bumper"]` even if the images also show other parts.
-- Only output multiple parts if the user explicitly claimed multiple parts in their conversation.
+### CRITICAL: object_part — ONLY explicit Customer-named parts
+You MUST extract ONLY the exact physical parts explicitly named by the Customer in the chat transcript.
+
+DO NOT infer parts based on what you see in the images.
+DO NOT add contextual or adjacent parts (e.g., if the user claims "contents", do NOT add "package_side" even if the box is visibly crushed).
+DO NOT add parts that appear in the images but were not mentioned by the Customer.
+If the Customer explicitly said "No, only X" or "just X", output ONLY X.
+If multiple parts are explicitly named by the Customer, separate them with a semicolon (;).
+
+**Negative Few-Shot Examples (what NOT to do):**
+
+❌ WRONG — adding inferred parts not claimed:
+  Customer: "The product inside the package is missing."
+  WRONG output: `"object_part": ["contents", "package_side", "package_corner"]`
+  ✅ CORRECT:   `"object_part": ["contents"]`
+
+❌ WRONG — adding parts visible in image but denied by Customer:
+  Customer: "My package was crushed." Support: "Any other damage?" Customer: "No, just the package."
+  WRONG output: `"object_part": ["package_side", "package_corner", "label"]`
+  ✅ CORRECT:   `"object_part": ["package_side"]`  (or whichever single part matches "crushed package")
+
+❌ WRONG — adding adjacent part not mentioned:
+  Customer: "Hinge broke." Support: "Screen too?" Customer: "No, hinge only."
+  WRONG output: `"object_part": ["hinge", "corner"]`
+  ✅ CORRECT:   `"object_part": ["hinge"]`
+
+✅ CORRECT — multiple parts only when Customer explicitly lists both:
+  Customer: "First, the door is dented. Second, the rear bumper is damaged."
+  CORRECT output: `"object_part": ["door", "rear_bumper"]`
 
 ---
 
